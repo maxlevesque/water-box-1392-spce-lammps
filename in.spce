@@ -1,0 +1,55 @@
+# SPC/E water box benchmark
+# manual at http://lammps.sandia.gov/doc/Manual.html
+
+units		real # Kelvin, gram/mol, angstroms, femtoseconds, atmospheres, electronic charges	
+atom_style	full # grosso modo for molecules
+
+#read_restart test.restart.*
+read_data	data.4176.spce
+
+pair_style	lj/cut/coul/long 10.0 10.0
+
+#####Change from patinet start
+kspace_style	pppm 1.0e-4
+#kspace_style	ewald 1.0e-4
+#####Change from patinet end
+
+pair_coeff	1 1 0.15535 3.166 # epsilon sigma en kcal/mol et angstroms
+pair_coeff	* 2 0.0000 0.0000	
+
+bond_style	harmonic
+angle_style	harmonic
+dihedral_style	none
+improper_style	none
+
+bond_coeff	1 1000.00 1.000
+angle_coeff	1 100.0 109.47
+
+special_bonds   lj/coul 0.0 0.0 0.5
+
+#neighbor        2.0 bin
+#neigh_modify	every 1 delay 10 check yes
+
+fix		1 all shake 0.0001 20 0 b 1 a 1
+fix		2 all nvt temp 298.15 298.15 200.0 # 100 time units = 100*timesteps recommandé
+
+#velocity	all create 300 432567 dist uniform
+
+timestep	2.0 # femtoseconds
+
+thermo_style    one
+thermo		50
+
+######Change from patinet start
+## This will compute rdf between oxygen-oxygen, oxygen-hydrogen, and hydrogen-hydrogen
+#compute myRDF all rdf 500 1 1 1 2 2 2
+#fix computemyRDF all ave/time 2 10 100 c_myRDF file test.rdf mode vector
+######Change from patinet end
+
+
+dump myDumptest all xyz 2000 testDump.xyz
+
+#minimize 0.0 1.0e-8 1000 100000 # etol ftol maxiter maxeva
+
+restart 1000 test.restart
+run		300

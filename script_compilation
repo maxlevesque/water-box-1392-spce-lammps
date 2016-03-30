@@ -1,0 +1,47 @@
+#!/bin/bash
+echo " ==== "
+echo " Proudly powered by Maximilien Levesque and PersonalHPC "
+echo " Comments, bug-reports : contact@personalhpc.com"
+echo " ==== "
+
+# be sure you have all necessary software
+sudo apt-get install git autoconf automake libtool gfortran g++ flex make -y
+
+# compile openmpi from latest source
+cd /tmp
+git clone https://github.com/open-mpi/ompi.git
+cd ompi
+./autogen.pl
+mkdir _mybuild
+cd _mybuild
+../configure --prefix=/opt/ompi --exec-prefix=/opt/ompi --with-platform=optimized
+sudo make all install
+
+# compile lammps from latest source
+git clone https://github.com/lammps/lammps lammps
+cd lammps/src
+# compile packages that you need. This is user-specific. Here that's OK for what I am aware you typically use.
+make yes-asphere yes-body yes-class2 yes-colloid yes-dipole yes-fld yes-granular yes-kspace yes-manybody yes-mc yes-misc yes-molecule yes-mpiio yes-opt yes-peri yes-replica yes-rigid yes-shock yes-snap yes-srd yes-xtc
+wget "https://raw.githubusercontent.com/personalhpc/LAMMPS-Makefile-for-PersonalHPC/master/Makefile.personalhpc" && mv Makefile.personalhpc MAKE/MACHINES/.  # proudly powered by Maximilien Levesque, for PersonalHPC
+make -j personalhpc
+sudo mkdir -p /opt/lammps
+sudo mv lmp_personalhpc /opt/lammps/lammps
+
+testlammpsdir=/tmp/testlammps
+mkdir -p $testlammpsdir && cd $testlammpsdir
+wget "https://raw.githubusercontent.com/personalhpc/LAMMPS-Makefile-for-PersonalHPC/master/lammpstest.in"
+wget "https://raw.githubusercontent.com/personalhpc/LAMMPS-Makefile-for-PersonalHPC/master/needed-by-lammpstest.in"
+/opt/ompi/bin/mpirun -np 1 /opt/lammps/lammps < lammpstest.in
+
+echo " ==== ==== "
+echo " All mpi related exec (mpirun, mpif90, mpicc, etc) are in /opt/ompi/bin"
+echo " Your LAMMPS executable is /opt/lammps/lammps"
+echo " ==== "
+echo " Proudly powered by Maximilien Levesque and PersonalHPC "
+echo " Comments, bug-reports : contact@personalhpc.com"
+echo " ==== ==== "
+
+# LAMMPS is now compiled. It is called mylammps and can be found in mylammps/src/.
+
+# comment: If you are not certain MPI tasks are being bound (check the defaults for your MPI installation), binding can be forced with these flags:
+# OpenMPI 1.8: /opt/ompi/bin/mpirun -np 2 -bind-to socket -map-by socket ./lmp_openmpi ...

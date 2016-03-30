@@ -1,0 +1,119 @@
+LAMMPS (12 Mar 2015)
+WARNING: OMP_NUM_THREADS environment is not set. (../comm.cpp:89)
+  using 1 OpenMP thread(s) per MPI task
+# SPC/E water box benchmark
+# manual at http://lammps.sandia.gov/doc/Manual.html
+
+units		real # Kelvin, gram/mol, angstroms, femtoseconds, atmospheres, electronic charges
+atom_style	full # grosso modo for molecules
+
+read_data	data.4176.spce
+  orthogonal box = (0 0 0) to (35.5328 35.5328 35.4736)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  4176 atoms
+  scanning bonds ...
+  2 = max bonds/atom
+  scanning angles ...
+  1 = max angles/atom
+  reading bonds ...
+  2784 bonds
+  reading angles ...
+  1392 angles
+  2 = max # of 1-2 neighbors
+  1 = max # of 1-3 neighbors
+  1 = max # of 1-4 neighbors
+  2 = max # of special neighbors
+
+pair_style	lj/cut/coul/long 10.0 10.0
+
+#####Change from patinet start
+kspace_style	pppm 1.0e-4
+#kspace_style	ewald 1.0e-4
+#####Change from patinet end
+
+pair_coeff	1 1 0.15535 3.166 # epsilon sigma en kcal/mol et angstroms
+pair_coeff	* 2 0.0000 0.0000
+
+bond_style	harmonic
+angle_style	harmonic
+dihedral_style	none
+improper_style	none
+
+bond_coeff	1 1000.00 1.000
+angle_coeff	1 100.0 109.47
+
+special_bonds   lj/coul 0.0 0.0 0.5
+  2 = max # of 1-2 neighbors
+  1 = max # of 1-3 neighbors
+  1 = max # of 1-4 neighbors
+  2 = max # of special neighbors
+
+#neighbor        2.0 bin
+#neigh_modify	every 1 delay 10 check yes
+
+fix		1 all shake 0.0001 20 0 b 1 a 1
+  0 = # of size 2 clusters
+  0 = # of size 3 clusters
+  0 = # of size 4 clusters
+  1392 = # of frozen angles
+fix		2 all nvt temp 298.15 298.15 200.0 # 100 time units = 100*timesteps recommandé
+
+velocity	all create 300 432567 dist uniform
+
+timestep	2.0 # femtoseconds
+
+thermo_style    one
+thermo		50
+
+######Change from patinet start
+## This will compute rdf between oxygen-oxygen, oxygen-hydrogen, and hydrogen-hydrogen
+#compute myRDF all rdf 500 1 1 1 2 2 2
+#fix computemyRDF all ave/time 2 10 100 c_myRDF file test.rdf mode vector
+######Change from patinet end
+
+
+dump myDumptest all xyz 2000 testDump.xyz
+
+#minimize 0.0 1.0e-8 1000 100000 # etol ftol maxiter maxeva
+restart 10 test.restart
+run		100
+PPPM initialization ...
+  G vector (1/distance) = 0.262112
+  grid = 18 18 18
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.0337853
+  estimated relative force accuracy = 0.000101743
+  using double precision FFTs
+  3d grid and FFT values/proc = 15625 5832
+Neighbor list info ...
+  1 neighbor list requests
+  update every 1 steps, delay 10 steps, check yes
+  master list distance cutoff = 12
+Memory usage per processor = 16.7655 Mbytes
+Step Temp E_pair E_mol TotEng Press 
+       0          300   -14319.045            0   -11830.366    -1855.958 
+      50    284.71877   -14957.483            0   -12595.572   -1596.7759 
+     100    302.58703   -15055.595            0   -12545.456   -1271.1834 
+Loop time of 2.98661 on 1 procs (1 MPI x 1 OpenMP) for 100 steps with 4176 atoms
+
+Pair  time (%) = 2.30424 (77.1522)
+Bond  time (%) = 0.000124693 (0.00417507)
+Kspce time (%) = 0.242202 (8.1096)
+Neigh time (%) = 0.384001 (12.8574)
+Comm  time (%) = 0.011848 (0.396703)
+Outpt time (%) = 0.00493336 (0.165183)
+Other time (%) = 0.0392652 (1.31471)
+
+Nlocal:    4176 ave 4176 max 4176 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:    15431 ave 15431 max 15431 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:    1.40802e+06 ave 1.40802e+06 max 1.40802e+06 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 1408015
+Ave neighs/atom = 337.168
+Ave special neighs/atom = 2
+Neighbor list builds = 10
+Dangerous builds = 0

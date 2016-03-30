@@ -1,0 +1,136 @@
+LAMMPS (14 Mar 2016-ICMS)
+WARNING: OMP_NUM_THREADS environment is not set. (../comm.cpp:90)
+  using 1 OpenMP thread(s) per MPI task
+# SPC/E water box benchmark
+# manual at http://lammps.sandia.gov/doc/Manual.html
+
+units		real # Kelvin, gram/mol, angstroms, femtoseconds, atmospheres, electronic charges
+atom_style	full # grosso modo for molecules
+
+#read_restart test.restart.*
+read_data	data.4176.spce
+  orthogonal box = (0 0 0) to (35.5328 35.5328 35.4736)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  4176 atoms
+  scanning bonds ...
+  2 = max bonds/atom
+  scanning angles ...
+  1 = max angles/atom
+  reading bonds ...
+  2784 bonds
+  reading angles ...
+  1392 angles
+  2 = max # of 1-2 neighbors
+  1 = max # of 1-3 neighbors
+  1 = max # of 1-4 neighbors
+  2 = max # of special neighbors
+
+pair_style	lj/cut/coul/long 10.0 10.0
+
+#####Change from patinet start
+kspace_style	pppm 1.0e-4
+#kspace_style	ewald 1.0e-4
+#####Change from patinet end
+
+pair_coeff	1 1 0.15535 3.166 # epsilon sigma en kcal/mol et angstroms
+pair_coeff	* 2 0.0000 0.0000
+
+bond_style	harmonic
+angle_style	harmonic
+dihedral_style	none
+improper_style	none
+
+bond_coeff	1 1000.00 1.000
+angle_coeff	1 100.0 109.47
+
+special_bonds   lj/coul 0.0 0.0 0.5
+  2 = max # of 1-2 neighbors
+  1 = max # of 1-3 neighbors
+  1 = max # of 1-4 neighbors
+  2 = max # of special neighbors
+
+#neighbor        2.0 bin
+#neigh_modify	every 1 delay 10 check yes
+
+fix		1 all shake 0.0001 20 0 b 1 a 1
+  0 = # of size 2 clusters
+  0 = # of size 3 clusters
+  0 = # of size 4 clusters
+  1392 = # of frozen angles
+fix		2 all nvt temp 298.15 298.15 200.0 # 100 time units = 100*timesteps recommandé
+
+#velocity	all create 300 432567 dist uniform
+
+timestep	2.0 # femtoseconds
+
+thermo_style    one
+thermo		50
+
+######Change from patinet start
+## This will compute rdf between oxygen-oxygen, oxygen-hydrogen, and hydrogen-hydrogen
+#compute myRDF all rdf 500 1 1 1 2 2 2
+#fix computemyRDF all ave/time 2 10 100 c_myRDF file test.rdf mode vector
+######Change from patinet end
+
+
+dump myDumptest all xyz 2000 testDump.xyz
+
+#minimize 0.0 1.0e-8 1000 100000 # etol ftol maxiter maxeva
+
+restart 1000 test.restart
+run		300
+PPPM initialization ...
+  G vector (1/distance) = 0.262112
+  grid = 18 18 18
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.0337853
+  estimated relative force accuracy = 0.000101743
+  using double precision FFTs
+  3d grid and FFT values/proc = 15625 5832
+Neighbor list info ...
+  1 neighbor list requests
+  update every 1 steps, delay 10 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 12
+  ghost atom cutoff = 12
+  binsize = 6 -> bins = 6 6 6
+Memory usage per processor = 16.7655 Mbytes
+Step Temp E_pair E_mol TotEng Press 
+       0            0   -14319.045            0   -14319.045   -2339.7738 
+      50    208.78573    -15936.24            0   -14204.238   -2410.1132 
+     100    228.67109   -15962.028            0   -14065.066   -2088.5772 
+     150    229.57431   -15814.961            0   -13910.505   -1324.1259 
+     200    251.99311   -15838.672            0    -13748.24   -1184.0759 
+     250    254.08809   -15692.643            0   -13584.831   -1166.6516 
+     300    262.98596   -15605.319            0   -13423.694   -1231.7276 
+Loop time of 8.78587 on 1 procs for 300 steps with 4176 atoms
+
+Performance: 5.900 ns/day, 4.068 hours/ns, 34.146 timesteps/s
+100.0% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 6.9575     | 6.9575     | 6.9575     |   0.0 | 79.19
+Bond    | 0.00033045 | 0.00033045 | 0.00033045 |   0.0 |  0.00
+Kspace  | 0.72579    | 0.72579    | 0.72579    |   0.0 |  8.26
+Neigh   | 0.94974    | 0.94974    | 0.94974    |   0.0 | 10.81
+Comm    | 0.033541   | 0.033541   | 0.033541   |   0.0 |  0.38
+Output  | 0.00015903 | 0.00015903 | 0.00015903 |   0.0 |  0.00
+Modify  | 0.11205    | 0.11205    | 0.11205    |   0.0 |  1.28
+Other   |            | 0.006808   |            |       |  0.08
+
+Nlocal:    4176 ave 4176 max 4176 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:    15336 ave 15336 max 15336 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:    1.40709e+06 ave 1.40709e+06 max 1.40709e+06 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 1407091
+Ave neighs/atom = 336.947
+Ave special neighs/atom = 2
+Neighbor list builds = 24
+Dangerous builds = 4
+Total wall time: 0:00:08
